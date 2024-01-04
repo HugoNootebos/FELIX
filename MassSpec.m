@@ -3,21 +3,21 @@ function intensity = MassSpec(file,wavelength)
     params = h5read(file,"/Parameters");
     point = abs(wavelength - params.scanStart)/params.scanStep + 1;
     file_char = convertStringsToChars(file);
-    if point < 10
+    if point < 9
         add = "0000";
-    elseif point < 100
+    elseif point < 99
         add = "000";
-    elseif point < 1000
+    elseif point < 999
         add = "00";
-    elseif point < 10000
+    elseif point < 9999
         add = "0";
     else
         add = "";
     end
     lock = true;
     try
-        data = h5read(file, "/Rawdat/P" + add + point + "_" + num2str(wavelength,'%.4f') + "/Trace");
         disp("Loading P" + add+point+"/"+num2str(wavelength,'%.4f') + " from " + file_char(25:end))
+        data = h5read(file, "/Rawdat/P" + add + point + "_" + num2str(wavelength,'%.4f') + "/Trace");
     catch
         %ERROR continue to next file
         intensity = -1;

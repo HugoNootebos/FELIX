@@ -1,5 +1,6 @@
 function [wavenumbers, intensity] = PlotFolder(folder, mass)
     disp("Reading folder: " + folder)
+    int = 6;
     source = dir(folder);
     plotFiles = "";
     for i = 1:length(source)
@@ -8,20 +9,37 @@ function [wavenumbers, intensity] = PlotFolder(folder, mass)
         end
     end
     plotFiles(1) = [];
-    wavelength_range = [];
+    wl = [];
     intensity = [];
     err_count = 0;
-    err_files = [];
-    for ii = 1:length(plotFiles)
-        [new_wavelength_range, new_intensity] = Readh5(plotFiles(ii),mass);
-        wavelength_range = [wavelength_range, new_wavelength_range];
-        intensity = [intensity, new_intensity];
-        if isempty(Readh5(plotFiles(ii),mass))
+    for file = 1:length(plotFiles)
+        params = h5read(plotFiles(file),"/Parameters");
+        if params.scanStop > params.scanStart
+            ud = 1;
+        else
+            ud = -1;
+        end
+        wavelength_set = [];
+        for wli = params.scanStart:ud*params.scanStep:params.scanStop-ud*params.scanStep
+            ms = MassSpec(plotFiles(file), wli);
+            if ms == -1
+                disp("Scan ends at " + wli + ". Opening next file")
+                break
+            end
+            %integrate intensity of +- int points around mass tof
+            integral = 0;
+            for i = -int:1:int
+                integral = integral + ms(mass+i);
+            end
+            intensity(end+1) = -integral;
+            wl(end+1) = wli;
+        end
+        if isempty(Readh5(plotFiles(file),mass))
             err_count = err_count + 1;
         end
     end
-    wavelength_range = wavelength_range;%/2;
-    wavenumbers = 1./(wavelength_range.*10^(-7));
+    %wl = wl/2;
+    wavenumbers = 1./(wl.*10^(-7));
     disp(length(plotFiles) - err_count + "/" + length(plotFiles) + " files plotted successfully")
     figure('name',"cm" + folder);
     plot(wavenumbers,intensity)
@@ -32,7 +50,7 @@ function [wavenumbers, intensity] = PlotFolder(folder, mass)
     set(gca, 'XDir','reverse')
     exportgraphics(gcf,"PlotFolder_out_cm.png");
     figure('name',"nm" + folder);
-    plot(wavelength_range,intensity);
+    plot(wl,intensity);
     xlabel("wavelength (nm)")
     ylabel("Intensity (arbitrary units)")
     grid on

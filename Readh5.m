@@ -1,4 +1,5 @@
 function [wavelength_set,intensity] = Readh5(file,mass)
+    int = 10;
     params = h5read(file,"/Parameters");
     if params.scanStop > params.scanStart
         ud = 1;
@@ -18,9 +19,13 @@ function [wavelength_set,intensity] = Readh5(file,mass)
             break
         end
         if resume
-            %integrate intensity of +- 7 points around mass tof
+            sz = size(current_I);
+            if sz(1) == 2
+                current_I = current_I(1,:) - current_I(2,:);
+            end
+            %integrate intensity of +- int points around mass tof
             integral = 0;
-            for i = -7:1:7
+            for i = -int:1:int
                 integral = integral + current_I(mass+i);
             end
             intensity(end+1) = -integral;

@@ -3,26 +3,19 @@ function intensity = MassSpec(file,wavelength)
     params = h5read(file,"/Parameters");
     point = abs(wavelength - params.scanStart)/params.scanStep + 1;
     file_char = convertStringsToChars(file);
-    if point < 9
-        add = "0000";
-    elseif point < 99
-        add = "000";
-    elseif point < 999
-        add = "00";
-    elseif point < 9999
-        add = "0";
-    else
-        add = "";
+    dat_point = num2str(point); 
+    while strlength(dat_point) < 5
+        dat_point = "0" + dat_point;
     end
     lock = true;
+    disp("Loading P" + dat_point+"/"+num2str(wavelength,'%.4f') + " from " + file_char(25:end))
     try
-        disp("Loading P" + add+point+"/"+num2str(wavelength,'%.4f') + " from " + file_char(25:end))
-        data = h5read(file, "/Rawdat/P" + add + point + "_" + num2str(wavelength,'%.4f') + "/Trace");
+        data = h5read(file, "/Rawdat/P" + dat_point + "_" + num2str(wavelength,'%.4f') + "/Trace");
     catch
-        %ERROR continue to next file
         intensity = -1;
         data = -1;
         lock = false;
+        disp("ERROR: point not found. Going to next file")
     end
     if lock
         tof = [];
